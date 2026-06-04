@@ -28,7 +28,7 @@ It connects via **Bluetooth** for real-time input and **WiFi** for easy configur
 * 🌐 **Web UI Configuration**
 
   * Access via browser (phone or PC)
-  * Remap keys and encoders بسهولة
+  * Remap keys and encoders 
   * No need to reflash firmware for changes
 
 ---
