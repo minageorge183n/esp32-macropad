@@ -1,10 +1,9 @@
 #pragma once
-#include <BleKeyboard.h> 
+#include <BleKeyboard.h>
 #include "macropad.h"
 #include "keys.h"
 
-
-// ── Mapping helpers ───────────────────────────────────────────
+// ── Key mapping helpers ───────────────────────────────────────
 #define SINGLE(label, mod, key) \
   { KEY_SINGLE, label, {mod, 0, 0}, key, nullptr, nullptr }
 
@@ -17,10 +16,16 @@
 #define NONE \
   { KEY_NONE,   "-",   {0, 0, 0},   0,   nullptr, nullptr }
 
+// ── Encoder action helpers ────────────────────────────────────
+#define EMEDIA(key)          { ENC_MEDIA,  {0, 0},            0,   key  }
+#define ESINGLE(mod, key)    { ENC_SINGLE, {mod, 0},          key, nullptr }
+#define ESINGLE2(m1, m2, k)  { ENC_SINGLE, {m1, m2},          k,   nullptr }
+#define ENONE                { ENC_NONE,   {0, 0},            0,   nullptr }
+
 // ── Key layout reference ──────────────────────────────────────
 // [ 0 ][ 1 ][ 2 ]
 // [ 3 ][ 4 ][ 5 ]
-// [ 6 ][ 7 ][ 8 ]
+// [ 6 ][ 7 ]
 
 const KeyAction keymap[NUM_MODES][NUM_KEYS] = {
 
@@ -36,7 +41,8 @@ const KeyAction keymap[NUM_MODES][NUM_KEYS] = {
 
     SINGLE("Cut",   KEY_LEFT_GUI, 'x'),
     SINGLE("Copy",  KEY_LEFT_GUI, 'c'),
-    SINGLE("Paste", KEY_LEFT_GUI, 'v'),
+    SINGLE("Copy",  KEY_LEFT_GUI, 'c'),
+    
   },
 
   // ── MODE 1 : Dev Tools ───────────────────────────────────
@@ -51,8 +57,9 @@ const KeyAction keymap[NUM_MODES][NUM_KEYS] = {
 
     STRING("TODO",   "// TODO: "),
     STRING("Debug",  "console.log()"),
-    STRING("Email",  "you@email.com"),
+    SINGLE("Copy",  KEY_LEFT_GUI, 'c'),
   },
+
   // ── MODE 2 : Custom ──────────────────────────────────────
   {
     NONE, NONE, NONE,
@@ -61,3 +68,34 @@ const KeyAction keymap[NUM_MODES][NUM_KEYS] = {
   },
 };
 
+// ── Encoder 2 — mode-aware behaviour ─────────────────────────
+//   .cw    = clockwise turn
+//   .ccw   = counter-clockwise turn
+//   .press = push button
+
+const EncoderMode enc2Modes[NUM_MODES] = {
+
+  // MODE 0 : track scrubbing
+  {
+    "Media Scrub",
+    EMEDIA(KEY_MEDIA_NEXT_TRACK),      // CW  → Next track
+    EMEDIA(KEY_MEDIA_PREVIOUS_TRACK),  // CCW → Prev track
+    EMEDIA(KEY_MEDIA_PLAY_PAUSE),      // SW  → Play/Pause
+  },
+
+  // MODE 1 : indent / unindent
+  {
+    "Indent",
+    ESINGLE(0, KEY_TAB),                        // CW  → Indent   (Tab)
+    ESINGLE2(KEY_LEFT_SHIFT, 0, KEY_TAB),       // CCW → Unindent (Shift+Tab)
+    ESINGLE(KEY_LEFT_GUI, '/'),                 // SW  → Comment toggle
+  },
+
+  // MODE 2 : custom (placeholders)
+  {
+    "Custom",
+    ENONE,   // CW
+    ENONE,   // CCW
+    ENONE,   // SW
+  },
+};
