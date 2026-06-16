@@ -4,6 +4,7 @@
 #include "keys.h"
 #include "keymap.h"
 #include "display.h"
+#include "games.h"
 
 BleKeyboard ble("Macropad", "DIY", 100);
 
@@ -49,6 +50,7 @@ void setup() {
   enc2.lastCLK = digitalRead(ENC2_CLK);
 
   displayInit();
+  gamesInit(&tft);
   ble.begin();
 
   // Show "waiting for BLE" immediately
@@ -126,6 +128,7 @@ void executeEncoderAction(const EncoderAction& action) {
 
 // ── Loop ──────────────────────────────────────────────────────
 void loop() {
+
   bool bleConnected = ble.isConnected();
 
   // BLE state change → force redraw
@@ -133,7 +136,7 @@ void loop() {
     bleWasConnected = bleConnected;
     screenDirty = true;
   }
-
+  if (gamesTick()) return;
   // ── 9 keys ──────────────────────────────────────────────────
   for (int i = 0; i < NUM_KEYS; i++) {
     if (debounce(keys[i], digitalRead(KEY_PINS[i]) == LOW)) {

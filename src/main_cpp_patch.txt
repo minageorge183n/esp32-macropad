@@ -1,0 +1,17 @@
+
+Secret combos
+GameHow to launchSnakeHold keys 0 + 2 (top-left + top-right corners) for 1.5 sTetrisHold keys 6 + 8 (bottom-left + bottom-right corners) for 1.5 s
+A brief splash screen appears, then the game boots. When you exit, the macropad UI redraws itself automatically.
+Controls
+Snake (uses the natural d-pad positions):
+
+Key 1 = Up, 3 = Left, 5 = Right, 7 = Down
+Hold 4 (centre) 1.5 s → exit
+
+Tetris:
+
+Key 3 = move left, 5 = move right
+Key 1 = rotate CW (with wall-kick)
+Key 4 = soft drop
+Key 7 = hard drop (instant lock)
+Hold Enc2 SW (mode button) 1.2 s → exit
