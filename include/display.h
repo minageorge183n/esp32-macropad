@@ -4,50 +4,68 @@
 #include "keys.h"
 #include "keymap.h"
 
-// ── Palette (RGB565) — sleek minimal ─────────────────────────
-// Near-black background, single cyan accent, everything else neutral
-#define C_BG        0x0861   // deep charcoal (not pure black — avoids burn feel)
-#define C_PANEL     0x1082   // raised surface — subtle lift from BG
-#define C_BORDER    0x2104   // quiet border — present but not loud
-#define C_BORDER_HI 0x4208   // slightly brighter border for active cells
-#define C_TEXT      0xEF7D   // warm off-white (softer than pure 0xFFFF)
-#define C_DIM       0x4A69   // muted grey for empty/inactive elements
-#define C_ACCENT    0x05DF   // tighter cyan — less saturated than 0x07FF
-#define C_ACCENT_DIM 0x0299  // accent at 40% for BLE pill background
-#define C_BLE_ON    0x0400   // deep green dot — not neon
-#define C_BLE_OFF   0x6000   // muted red — not alarming
-#define C_FLASH     0xFCA0   // warm amber for last-action (softer than 0xFD20)
-#define C_STRIPE    0x05DF   // left accent stripe on last-action bar
+// ── Palette — macOS dark UI ───────────────────────────────────
+// System Background layers
+#define C_BG            0x18C3   // #161618  deepest background
+#define C_PANEL         0x2945   // #2c2c2e  elevated surface (cards, bars)
+#define C_PANEL_HI      0x39E7   // #3a3a3c  hovered / active surface
+#define C_SEPARATOR     0x4228   // #48484a  separator lines, borders
 
-// ── Layout constants ─────────────────────────────────────────
-#define SCREEN_W    240
-#define SCREEN_H    240
+// Text
+#define C_TEXT          0xEF7B   // #ebebf5  primary label
+#define C_TEXT_SEC      0xAD55   // #ababab  secondary label
+#define C_TEXT_TER      0x6B4D   // #6b6b6b  tertiary / hint
 
-// Top bar: thinner, cleaner
-#define TOP_BAR_H   24
+// Accent colours (macOS system palette)
+#define C_BLUE          0x051F   // #0a84ff  system blue  (active key, BLE dot)
+#define C_GREEN         0x2D8B   // #28c840  system green (BLE connected)
+#define C_RED           0xFA08   // #ff453a  system red   (mute, BLE off)
+#define C_AMBER         0xFF25   // #ffd60a  system yellow (clipboard icons)
+#define C_PURPLE        0x981F   // #bf5af2  optional accent
 
-// 1px gap between regions
-#define GRID_Y      (TOP_BAR_H + 2)
-#define CELL_W      80
-#define CELL_H      54
-#define GRID_H      (CELL_H * 3)           // 162
-#define ENC_ROW_Y   (GRID_Y + GRID_H + 2)  // ~190
-#define ENC_ROW_H   24
-#define LAST_Y      (ENC_ROW_Y + ENC_ROW_H + 2)
-#define LAST_H      (SCREEN_H - LAST_Y)    // ~14 px
+// Active-key tint background
+#define C_ACTIVE_BG     0x0E5A   // #1c3a5e  blue wash for pressed/last key
 
-// Left accent stripe on last-action bar
-#define STRIPE_W    3
+// Traffic-light dots
+#define C_TL_RED        0xFA8E   // #ff5f57
+#define C_TL_AMBER      0xFF25   // #febc2e
+#define C_TL_GREEN      0x2D8B   // #28c840
+
+// Flash / toast
+#define C_TOAST_BG      0x2945   // same as C_PANEL — pill matches the bar
+#define C_FLASH         0x051F   // blue dot in toast
+
+// ── Layout ───────────────────────────────────────────────────
+#define SCREEN_W        240
+#define SCREEN_H        240
+
+#define MENUBAR_H       28       // top menu-bar height
+#define GRID_TOP        (MENUBAR_H + 2)
+#define CELL_W          78       // (240 - 6px gaps) / 3  ≈ 78
+#define CELL_H          54
+#define CELL_R          9        // corner radius for key cards
+#define CELL_GAP        3        // gap between cells
+
+#define GRID_H          (CELL_H * 3 + CELL_GAP * 2)   // 3 rows + 2 gaps = 170
+#define DOCK_Y          (GRID_TOP + GRID_H + 3)        // encoder dock top
+#define DOCK_H          22
+#define DOCK_R          11       // pill radius
+
+#define TOAST_Y         (DOCK_Y + DOCK_H + 3)
+#define TOAST_H         16
+#define TOAST_R         8
 
 extern TFT_eSPI tft;
 
-// ── State that display tracks ─────────────────────────────────
+// ── Display state ─────────────────────────────────────────────
 extern bool     screenDirty;
 extern char     lastActionLabel[32];
 extern uint32_t lastActionMs;
 extern bool     lastActionVisible;
+extern uint8_t  lastActionKey;    // 0-8 key index, 0xFF = encoder/other
 
+// ── Public API ────────────────────────────────────────────────
 void displayInit();
 void displayDraw(uint8_t mode, bool bleConnected);
-void displaySetLastAction(const char* label);
+void displaySetLastAction(const char* label, uint8_t keyIdx = 0xFF);
 void displayTick(uint8_t mode, bool bleConnected);
