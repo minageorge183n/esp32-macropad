@@ -5,6 +5,7 @@
 #include "keymap.h"
 #include "display.h"
 #include "games.h"
+#include "spotify.h"
 
 BleKeyboard ble("Macropad", "DIY", 100);
 
@@ -19,6 +20,11 @@ KeyDebounce keys[NUM_KEYS] = {};
 KeyDebounce modeKey        = {};
 uint8_t     currentMode    = 0;
 bool        bleWasConnected = false;
+
+// Track whether Spotify has been initialised yet
+// (lazy-init on first entry into mode 3 to avoid slowing down boot)
+static bool spotifyInitialised = false;
+static uint8_t prevMode = 0;
 
 // ── Rotary encoder state ──────────────────────────────────────
 struct Encoder {
@@ -132,9 +138,74 @@ void loop() {
 
   if (bleConnected != bleWasConnected) {
     bleWasConnected = bleConnected;
-    screenDirty = true;
+    if (currentMode != 3) screenDirty = true;
   }
+
   if (gamesTick()) return;
+
+  // ── Spotify mode ──────────────────────────────────────────
+  if (currentMode == 3) {
+    // Lazy init: connect WiFi + fetch first token the first time we enter
+    if (!spotifyInitialised) {
+      spotifyInit(&tft);
+      spotifyInitialised = true;
+    }
+
+    // If we just switched into mode 3, force a full redraw
+    if (prevMode != 3) {
+      spotifyDrawFull();
+    }
+    prevMode = 3;
+
+    // Keys still send BLE commands (Vol+/-, Play, Prev, Next)
+    for (int i = 0; i < NUM_KEYS; i++) {
+      if (debounce(keys[i], digitalRead(KEY_PINS[i]) == LOW)) {
+        const KeyAction& action = keymap[currentMode][i];
+        if (action.type != KEY_NONE) {
+          Serial.printf("Spotify key %d → %s\n", i, action.label);
+          executeAction(action);
+          // After a play/pause or skip, force an immediate Spotify poll
+          // so the display updates quickly rather than waiting 3 s
+          // We signal this by resetting the poll timer (accessed via extern)
+          // spotifyTick() will pick it up next call
+        }
+      }
+    }
+
+    // Enc2 CW/CCW = volume via BLE
+    int d2 = pollEncoder(enc2);
+    if (d2 != 0) {
+      const EncoderMode& em = enc2Modes[currentMode];
+      executeEncoderAction(d2 > 0 ? em.cw : em.ccw);
+    }
+
+    // Enc2 SW = mode change (same as other modes)
+    if (debounceEncSW(enc2)) {
+      currentMode = (currentMode + 1) % NUM_MODES;
+      Serial.printf("Mode → %d (%s)\n", currentMode, enc2Modes[currentMode].label);
+      screenDirty = true;
+    }
+
+    // Enc1 = always vol
+    int d1 = pollEncoder(enc1);
+    if (d1 != 0) {
+      if (d1 > 0) ble.press(KEY_MEDIA_VOLUME_UP);
+      else        ble.press(KEY_MEDIA_VOLUME_DOWN);
+      delay(10); ble.releaseAll();
+    }
+    if (debounceEncSW(enc1)) {
+      ble.press(KEY_MEDIA_MUTE);
+      delay(10); ble.releaseAll();
+    }
+
+    // Tick the Spotify module — handles polling + progress bar updates
+    spotifyTick();
+    return;
+  }
+
+  prevMode = currentMode;
+
+  // ── Normal macropad modes (0-2) ───────────────────────────
 
   // ── 9 keys ──────────────────────────────────────────────────
   for (int i = 0; i < NUM_KEYS; i++) {
@@ -142,7 +213,7 @@ void loop() {
       const KeyAction& action = keymap[currentMode][i];
       Serial.printf("Key %d [mode %d] → %s\n", i, currentMode, action.label);
       executeAction(action);
-      displaySetLastAction(action.label, i);   // pass key index for highlight
+      displaySetLastAction(action.label, i);
     }
   }
 
@@ -152,7 +223,7 @@ void loop() {
     if (d1 > 0) {
       Serial.println("Enc1 CW  → Vol+");
       ble.press(KEY_MEDIA_VOLUME_UP);
-      displaySetLastAction("Vol+");   // 0xFF key = no cell highlight
+      displaySetLastAction("Vol+");
     } else {
       Serial.println("Enc1 CCW → Vol-");
       ble.press(KEY_MEDIA_VOLUME_DOWN);
