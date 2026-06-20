@@ -16,7 +16,7 @@ struct KeyDebounce {
 };
 
 KeyDebounce keys[NUM_KEYS] = {};
-KeyDebounce modeKey        = {};   // kept for potential future use
+KeyDebounce modeKey        = {};
 uint8_t     currentMode    = 0;
 bool        bleWasConnected = false;
 
@@ -39,7 +39,7 @@ void setup() {
   for (int i = 0; i < NUM_KEYS; i++)
     pinMode(KEY_PINS[i], INPUT_PULLUP);
 
-  pinMode(ENC1_CLK, INPUT);    // pins 34/35 are input-only, no PULLUP
+  pinMode(ENC1_CLK, INPUT);
   pinMode(ENC1_DT,  INPUT);
   pinMode(ENC1_SW,  INPUT_PULLUP);
   pinMode(ENC2_CLK, INPUT_PULLUP);
@@ -53,7 +53,6 @@ void setup() {
   gamesInit(&tft);
   ble.begin();
 
-  // Show "waiting for BLE" immediately
   screenDirty = true;
   Serial.println("Macropad ready");
 }
@@ -131,19 +130,19 @@ void loop() {
 
   bool bleConnected = ble.isConnected();
 
-  // BLE state change → force redraw
   if (bleConnected != bleWasConnected) {
     bleWasConnected = bleConnected;
     screenDirty = true;
   }
   if (gamesTick()) return;
+
   // ── 9 keys ──────────────────────────────────────────────────
   for (int i = 0; i < NUM_KEYS; i++) {
     if (debounce(keys[i], digitalRead(KEY_PINS[i]) == LOW)) {
       const KeyAction& action = keymap[currentMode][i];
       Serial.printf("Key %d [mode %d] → %s\n", i, currentMode, action.label);
       executeAction(action);
-      displaySetLastAction(action.label);   // sets screenDirty
+      displaySetLastAction(action.label, i);   // pass key index for highlight
     }
   }
 
@@ -153,7 +152,7 @@ void loop() {
     if (d1 > 0) {
       Serial.println("Enc1 CW  → Vol+");
       ble.press(KEY_MEDIA_VOLUME_UP);
-      displaySetLastAction("Vol+");
+      displaySetLastAction("Vol+");   // 0xFF key = no cell highlight
     } else {
       Serial.println("Enc1 CCW → Vol-");
       ble.press(KEY_MEDIA_VOLUME_DOWN);
@@ -183,10 +182,9 @@ void loop() {
     }
   }
   if (debounceEncSW(enc2)) {
-    // SW click = cycle mode
     currentMode = (currentMode + 1) % NUM_MODES;
     Serial.printf("Mode → %d (%s)\n", currentMode, enc2Modes[currentMode].label);
-    screenDirty = true;   // mode change → full redraw
+    screenDirty = true;
   }
 
   // ── Screen refresh ───────────────────────────────────────────
