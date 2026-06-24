@@ -7,13 +7,13 @@
 const int KEY_PINS[9] = {13, 12, 14, 27, 26, 25, 33, 32, 21};
 
 #define NUM_KEYS  9
-#define NUM_MODES 4   // 0=Media, 1=Dev, 2=Custom, 3=Spotify
+#define NUM_MODES 3
 
-// ── Encoder 1 — Volume (constant across modes) ───────────────
+// ── Encoder 1 — Volume (constant across modes) ───────────────                                                                                                                                                                                                                                            
 //   Moved to input-only pins 34/35 to free 18/19 for SPI CLK
 #define ENC1_CLK  34
 #define ENC1_DT   35
-#define ENC1_SW   5
+#define ENC1_SW   5                                                                                                                                                                                                 
 
 // ── Encoder 2 — Mode-aware; SW click = mode change ───────────
 #define ENC2_CLK  16

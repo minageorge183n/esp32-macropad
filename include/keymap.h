@@ -39,7 +39,7 @@ const KeyAction keymap[NUM_MODES][NUM_KEYS] = {
 
     SINGLE("Cut",   KEY_LEFT_GUI, 'x'),
     SINGLE("Copy",  KEY_LEFT_GUI, 'c'),
-    SINGLE("Paste", KEY_LEFT_GUI, 'v'),
+    SINGLE("Paste", KEY_LEFT_GUI, 'v'),   // was duplicate Copy
   },
 
   // MODE 1 : Dev Tools
@@ -61,21 +61,6 @@ const KeyAction keymap[NUM_MODES][NUM_KEYS] = {
   {
     NONE, NONE, NONE,
     NONE, NONE, NONE,
-    NONE, NONE, NONE,
-  },
-
-  // MODE 3 : Spotify
-  // Keys mirror Mode 0 media row — BLE controls the host device,
-  // WiFi + Spotify API just drives the display.
-  {
-    MEDIA("Vol+",  KEY_MEDIA_VOLUME_UP),
-    MEDIA("Vol-",  KEY_MEDIA_VOLUME_DOWN),
-    MEDIA("Mute",  KEY_MEDIA_MUTE),
-
-    MEDIA("Prev",  KEY_MEDIA_PREVIOUS_TRACK),
-    MEDIA("Play",  KEY_MEDIA_PLAY_PAUSE),
-    MEDIA("Next",  KEY_MEDIA_NEXT_TRACK),
-
     NONE, NONE, NONE,
   },
 };
@@ -104,13 +89,5 @@ const EncoderMode enc2Modes[NUM_MODES] = {
     ENONE,
     ENONE,
     ENONE,
-  },
-
-  // MODE 3 : Spotify display (encoder = vol, SW = play/pause)
-  {
-    "Spotify",
-    EMEDIA(KEY_MEDIA_VOLUME_UP),
-    EMEDIA(KEY_MEDIA_VOLUME_DOWN),
-    EMEDIA(KEY_MEDIA_PLAY_PAUSE),
   },
 };
